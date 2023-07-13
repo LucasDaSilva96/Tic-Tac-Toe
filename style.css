@@ -1,0 +1,61 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  width: 200px;
+  height: 200px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  place-items: center;
+}
+
+.container div {
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  border: 2px solid black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container div:nth-child(1),
+.container div:nth-child(2),
+.container div:nth-child(3) {
+  border-top: 0;
+}
+
+.container div:nth-child(1),
+.container div:nth-child(4),
+.container div:nth-child(7) {
+  border-left: 0;
+}
+
+.container div:nth-child(7),
+.container div:nth-child(8),
+.container div:nth-child(9) {
+  border-bottom: 0;
+}
+
+.container div:nth-child(3),
+.container div:nth-child(6),
+.container div:nth-child(9) {
+  border-right: 0;
+}
+
+/* Reusable Classes  */
+
+.hidden {
+  display: none;
+}
