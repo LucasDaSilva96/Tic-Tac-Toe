@@ -115,15 +115,33 @@ strong {
   animation: floatAnimation 2.5s ease-in-out infinite;
 }
 
+.eye {
+  animation: eyeAnimation 2.5s ease-in-out infinite;
+}
+
+@keyframes eyeAnimation {
+  0% {
+    fill: #b8e9f4;
+  }
+  50% {
+    fill: #e06055;
+  }
+  100% {
+    fill: #e06055;
+  }
+}
+
 @keyframes floatAnimation {
   0% {
     transform: translateY(0);
   }
   50% {
     transform: translateY(-30px);
+    fill: #e06055;
   }
   100% {
     transform: translateY(0);
+    fill: #e06055;
   }
 }
 
