@@ -54,6 +54,7 @@ body {
 
 strong {
   font-size: 32px;
+  margin-left: 55px;
   color: whitesmoke;
   animation: type 2.5s linear 0s infinite alternate;
 }
@@ -455,4 +456,24 @@ canvas {
 
 .hidden {
   display: none;
+}
+
+.center {
+  text-align: center;
+}
+/* Media queries */
+
+@media (max-width: 380px) {
+  .welcome-h1 {
+    font-size: 36px;
+  }
+
+  .ai-choice-box,
+  .human-choice-box {
+    width: 170px;
+  }
+
+  strong {
+    display: none;
+  }
 }
