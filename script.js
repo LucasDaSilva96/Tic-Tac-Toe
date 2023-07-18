@@ -212,6 +212,11 @@ function init(player, OPPONENT) {
       result_txt.textContent = `The Winner: [X]`;
     } else if (player === "O") {
       result_txt.textContent = `The Winner: [O]`;
+      result_txt_box.innerHTML = `
+      <div class="result-box">
+          <p class="result-txt">You lost the game</p>
+        </div>
+      `;
     }
   }
 
