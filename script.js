@@ -199,10 +199,12 @@ function init(player, OPPONENT) {
   // This function displays the game over message based on the winner or a tie
   function showGameOver(player) {
     const result_box = document.querySelector(".play-again-container");
-    result_box.classList.remove("hidden");
     const result_txt = document.querySelector(".result-txt");
     const board_html = document.querySelector(".board");
-    board_html.classList.add("hidden");
+    setTimeout(function () {
+      board_html.classList.add("hidden");
+      result_box.classList.remove("hidden");
+    }, 400);
 
     if (player === "Tie") {
       result_txt.textContent = "NO WINNER...BORING..";
