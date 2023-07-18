@@ -3,6 +3,8 @@ const friend = document.querySelector(".human-choice-box");
 const start_container = document.querySelector(".start-container");
 const play_container = document.querySelector(".play-container");
 const svg_container = document.querySelector(".current-svg-container");
+const h1_text = document.querySelector(".welcome-h1");
+const heading_paragraph_box = document.querySelector(".heading-paragraph-box");
 
 const player = new Object();
 let OPPONENT;
@@ -15,8 +17,20 @@ computer.addEventListener("click", function () {
 
   init(player, OPPONENT);
 
+  heading_paragraph_box.innerHTML = ` 
+  <span class="heading-paragraph-txt">
+    <p class="player-p">You are [ X ]</p>
+    <strong>Tic Tac Toe</strong>
+  </span>`;
+
+  const heading_paragraph_strong = document.querySelector("strong");
+  const player_p = document.querySelector(".player-p");
+  player_p.style.textAlign = "center";
   start_container.classList.add("hidden");
   play_container.classList.remove("hidden");
+
+  heading_paragraph_strong.textContent = "Good Luck Human..Ha..Ha..HAA";
+  h1_text.textContent = "Human VS Ai".toLocaleUpperCase();
   svg_container.innerHTML = `
   <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -42,6 +56,17 @@ friend.addEventListener("click", function () {
 
   start_container.classList.add("hidden");
   play_container.classList.remove("hidden");
+  h1_text.textContent = "Human VS Human".toLocaleUpperCase();
+  heading_paragraph_box.innerHTML = ` 
+  <span class="heading-paragraph-txt">
+    <p class="player-p">Player-1: [ X ] Player-2: [ O ] </p>
+    <strong>Tic Tac Toe</strong>
+  </span>`;
+  const player_p = document.querySelector(".player-p");
+  player_p.style.textAlign = "center";
+  const heading_paragraph_strong = document.querySelector("strong");
+  heading_paragraph_strong.textContent =
+    "Who has the highest IQ?".toLocaleUpperCase();
 
   svg_container.innerHTML = `
           <svg
