@@ -1,178 +1,271 @@
-const cells = document.querySelectorAll("[data-cell");
-const board = document.querySelector(".board");
-const main_start_page = document.querySelector(".start-container");
-const human_choice_box = document.querySelector(".human-choice-box");
-const ai_choice_box = document.querySelector(".ai-choice-box");
-const playing_svg_container = document.querySelector(".current-svg-container");
-const result_container = document.querySelector(".play-again-container");
-const result_text = document.querySelector(".result-txt");
-const play_again_btn = document.querySelector(".play-again-btn");
-const play_container = document.querySelector(".play-container");
+// This function initializes the game board and sets up event listeners for the canvas element
+function init(player, OPPONENT) {
+  const canvas = document.getElementById("cvs");
+  const ctx = canvas.getContext("2d");
+  const COLUMN = 3;
+  const ROW = 3;
+  const xImage = new Image();
+  xImage.src = "X.png";
 
-const PLAYER_X = [];
-const PLAYER_O = [];
+  const oImage = new Image();
+  oImage.src = "O.png";
 
-let IS_X_TURN = true;
+  let board = [];
 
-const winning_combinations = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [2, 4, 6],
-];
-function playHumanVsHuman(target) {
-  target.forEach((el) => {
-    el.addEventListener("click", function () {
-      if (IS_X_TURN && el.dataset.clicked !== "true") {
-        el.dataset.clicked = "true";
-        PLAYER_X.push(Number(el.id));
-        el.textContent = "X";
-        renderWinner(IS_X_TURN, checkWinner(PLAYER_X));
-        swapTurns();
-      } else if (!IS_X_TURN && el.dataset.clicked !== "true") {
-        el.dataset.clicked = "true";
-        PLAYER_O.push(Number(el.id));
-        el.textContent = "O";
-        renderWinner(IS_X_TURN, checkWinner(PLAYER_O));
-        swapTurns();
+  const SPACE_SIZE = 150;
+  // This function draws the initial game board on the canvas using the ctx.strokeRect() method.
+  // It sets up a 3x3 grid and assigns unique IDs to each cell of the board.
+  function drawBoard() {
+    let id = 0;
+    for (let i = 0; i < ROW; i++) {
+      board[i] = [];
+      for (let j = 0; j < COLUMN; j++) {
+        board[i][j] = id;
+        ctx.strokeStyle = "#000";
+        ctx.strokeRect(j * SPACE_SIZE, i * SPACE_SIZE, SPACE_SIZE, SPACE_SIZE);
+
+        id++;
       }
-    });
-  });
-}
-
-function swapTurns() {
-  if (IS_X_TURN === true) {
-    return (IS_X_TURN = false);
-  } else if (IS_X_TURN === false) {
-    return (IS_X_TURN = true);
+    }
   }
-}
+  drawBoard();
 
-function checkWinner(CurrentPlayer) {
-  let result = winning_combinations.some((combination) => {
-    return combination.every((index) => {
-      return CurrentPlayer.includes(index);
-    });
+  let gameData = new Array(9);
+  let currentPlayer = player.man;
+
+  let GAME_OVER = false;
+  const win_combos = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+
+  // The canvas element has a click event listener that handles the player's moves.
+  // It calculates the cell position based on the mouse click coordinates and updates the game state accordingly
+  canvas.addEventListener("click", function (event) {
+    if (GAME_OVER) return;
+    let X = event.clientX - canvas.getBoundingClientRect().x;
+    let Y = event.clientY - canvas.getBoundingClientRect().y;
+
+    let i = Math.floor(Y / SPACE_SIZE);
+    let j = Math.floor(X / SPACE_SIZE);
+
+    let id = board[i][j];
+    if (gameData[id]) return;
+    gameData[id] = currentPlayer;
+
+    drawOnBoard(currentPlayer, i, j);
+
+    if (isWinner(gameData, currentPlayer)) {
+      showGameOver(currentPlayer);
+      GAME_OVER = true;
+      return;
+    }
+    if (isTie(gameData)) {
+      showGameOver("Tie");
+      GAME_OVER = true;
+      return;
+    }
+    // If the opponent is the computer (OPPONENT === "computer"), the code uses the minimax() function to
+    // determine the best move for the computer player.
+    // It recursively evaluates possible moves and assigns a score to each move.
+    // The computer then selects the move with the highest score.
+    if (OPPONENT === "computer") {
+      let id = minimax(gameData, player.computer).id;
+
+      let space = getIJ(id);
+
+      gameData[id] = player.computer;
+
+      drawOnBoard(player.computer, space.i, space.j);
+
+      if (isWinner(gameData, player.computer)) {
+        showGameOver(player.computer);
+        GAME_OVER = true;
+        return;
+      }
+      if (isTie(gameData)) {
+        showGameOver("Tie");
+        GAME_OVER = true;
+        return;
+      }
+    } else if (currentPlayer === player.man && OPPONENT === "friend") {
+      currentPlayer = player.friend;
+    } else if (currentPlayer === player.friend && OPPONENT === "friend") {
+      currentPlayer = player.man;
+    }
   });
 
-  return result;
-}
+  function minimax(gameData, PLAYER) {
+    // BASE
+    if (isWinner(gameData, player.computer)) return { evaluation: +10 };
+    if (isWinner(gameData, player.man)) return { evaluation: -10 };
+    if (isTie(gameData)) return { evaluation: 0 };
 
-function renderWinner(CurrentPlayer, checkWinner) {
-  if (checkWinner === true) {
-    board.classList.add("hidden");
-    result_container.classList.remove("hidden");
-    result_text.textContent =
-      CurrentPlayer === true
-        ? "Player [X] is the winner"
-        : "Player [O] is the winner";
-    playAgain();
+    // LOOK FOR EMPTY SPACES
+    let EMPTY_SPACES = getEmptySpaces(gameData);
+
+    // SAVE ALL MOVES AND THEIR EVALUATIONS
+    let moves = [];
+
+    // LOOP OVER THE EMPTY SPACES TO EVALUATE THEM
+    for (let i = 0; i < EMPTY_SPACES.length; i++) {
+      // GET THE ID OF THE EMPTY SPACE
+      let id = EMPTY_SPACES[i];
+
+      // BACK UP THE SPACE
+      let backup = gameData[id];
+
+      // MAKE THE MOVE FOR THE PLAYER
+      gameData[id] = PLAYER;
+
+      // SAVE THE MOVE'S ID AND EVALUATION
+      let move = {};
+      move.id = id;
+      // THE MOVE EVALUATION
+      if (PLAYER == player.computer) {
+        move.evaluation = minimax(gameData, player.man).evaluation;
+      } else {
+        move.evaluation = minimax(gameData, player.computer).evaluation;
+      }
+
+      // RESTORE SPACE
+      gameData[id] = backup;
+
+      // SAVE MOVE TO MOVES ARRAY
+      moves.push(move);
+    }
+
+    // MINIMAX ALGORITHM
+    let bestMove;
+
+    if (PLAYER == player.computer) {
+      // MAXIMIZER
+      let bestEvaluation = -Infinity;
+      for (let i = 0; i < moves.length; i++) {
+        if (moves[i].evaluation > bestEvaluation) {
+          bestEvaluation = moves[i].evaluation;
+          bestMove = moves[i];
+        }
+      }
+    } else {
+      // MINIMIZER
+      let bestEvaluation = +Infinity;
+      for (let i = 0; i < moves.length; i++) {
+        if (moves[i].evaluation < bestEvaluation) {
+          bestEvaluation = moves[i].evaluation;
+          bestMove = moves[i];
+        }
+      }
+    }
+
+    return bestMove;
   }
-}
+  // This function retrieves the row and column indices of a cell on the game board based on its ID.
+  function getIJ(id) {
+    console.log(id);
+    for (let i = 0; i < board.length; i++) {
+      for (let j = 0; j < board[i].length; j++) {
+        if (board[i][j] == id) {
+          return { i: i, j: j };
+        }
+      }
+    }
+  }
 
-function playAgain() {
-  play_again_btn.addEventListener("click", function () {
+  // This  function checks if a player has won the game by comparing the game board with the winning
+  // combinations defined in the win_combos array
+  function isWinner(gameData, player) {
+    for (let i = 0; i < win_combos.length; i++) {
+      let won = true;
+
+      for (let j = 0; j < win_combos[i].length; j++) {
+        let id = win_combos[i][j];
+        won = gameData[id] === player && won;
+      }
+
+      if (won) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // This function displays the game over message based on the winner or a tie
+  function showGameOver(player) {
+    const result_box = document.querySelector(".play-again-container");
+    result_box.classList.remove("hidden");
+    const result_txt = document.querySelector(".result-txt");
+
+    if (player === "Tie") {
+      result_txt.textContent = "NO WINNER...BORING..";
+    } else if (player === "X") {
+      result_txt.textContent = `The Winner: [X]`;
+    } else if (player === "O") {
+      result_txt.textContent = `The Winner: [O]`;
+    }
+  }
+
+  // This is the play again logic, which resets the game and reloads the page
+  const playAgainBtn = document.querySelector(".play-again-btn");
+  playAgainBtn.addEventListener("click", function () {
+    const result_box = document.querySelector(".play-again-container");
+    result_box.classList.add("hidden");
     play_container.classList.add("hidden");
-    result_container.classList.add("hidden");
-    main_start_page.classList.remove("hidden");
-    clearPlayersArray(PLAYER_X, PLAYER_O);
-    clearGameBoard();
+    start_container.classList.remove("hidden");
     location.reload();
-    playHumanVsHuman(cells);
   });
-}
 
-function renderSvg(opponent) {
-  playing_svg_container.classList.remove("hidden");
-  if (opponent.dataset.choice === "human") {
-    playing_svg_container.innerHTML = `
-    <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="94"
-    height="94"
-    viewBox="0 0 64 64"
-  >
-    <path
-      fill="currentColor"
-      d="M62 26.407a8.058 8.058 0 0 0-3.859-6.877a8.404 8.404 0 0 0 .496-2.822c0-4.593-3.689-8.319-8.266-8.39A7.77 7.77 0 0 0 43.5 4.176c-1.49 0-2.879.427-4.063 1.155C37.818 3.321 35.092 2 32 2s-5.816 1.321-7.438 3.333a7.724 7.724 0 0 0-4.063-1.155a7.766 7.766 0 0 0-6.87 4.142c-4.576.07-8.266 3.796-8.266 8.39c0 .991.181 1.939.496 2.822a8.056 8.056 0 0 0-1.962 12.069a6.847 6.847 0 0 0-.77 3.153a6.883 6.883 0 0 0 3.676 6.09c-.03.26-.05.525-.05.795a6.882 6.882 0 0 0 5.45 6.732c2.268 7.354 6.977 9.434 14.021 12.54l.375.165c1.819.804 4.166.924 5.402.924c1.237 0 3.583-.12 5.401-.923l.376-.166c7.042-3.105 11.751-5.186 14.019-12.539a6.883 6.883 0 0 0 5.449-6.732c0-.27-.02-.535-.049-.795a6.884 6.884 0 0 0 3.676-6.09a6.844 6.844 0 0 0-.77-3.153A8.038 8.038 0 0 0 62 26.407M50.871 43.113c-.279 2.071-.672 3.788-1.174 5.266l-.008.001c-2.09 6.14-6.199 7.884-13.117 10.937c-1.129.499-2.85.748-4.571.748c-1.721 0-3.442-.249-4.571-.748c-6.913-3.05-11.02-4.801-13.11-10.925h-.011c-.505-1.48-.898-3.202-1.178-5.278c-3.369-.231-4.368-2.393-4.368-5.028c0-4.232 1.961-4.555 3.48-4.17c.138.884.324 1.713.583 2.184c.464.842 1.41 1.32 1.41 1.32s-.255-.914-.162-3.316c1.353-19.236 3.695-10.614 17.928-10.614c14.234 0 16.578-8.623 17.926 10.636c.092 2.391-.164 3.295-.164 3.295s.947-.479 1.41-1.32c.258-.471.447-1.3.584-2.184c1.52-.385 3.48-.063 3.48 4.17c0 2.634-.998 4.795-4.367 5.026"
-    />
-    <path
-      fill="currentColor"
-      d="M42.165 44.56c-1.138 0-2.786.326-4.478.721a6.21 6.21 0 0 0 .93-3.262c0-3.537-2.963-6.404-6.617-6.404s-6.617 2.867-6.617 6.404a6.21 6.21 0 0 0 .93 3.262c-1.691-.395-3.34-.721-4.478-.721h-.001c-1.117 0-1.824.338-2.101 1.006c-.441 1.068.591 2.219 1.658 3.204c.938.867 1.603 2.175 2.307 3.559c1.44 2.836 3.234 6.365 8.302 6.365c5.066 0 6.859-3.528 8.301-6.364c.704-1.385 1.369-2.691 2.309-3.56c1.067-.985 2.099-2.136 1.656-3.203c-.276-.67-.983-1.007-2.101-1.007m-.245 3.509c-3.191 2.945-3.238 9.656-9.92 9.656s-6.729-6.711-9.918-9.656c-2.086-1.925-1.704-2.543-.248-2.543c1.296.001 3.439.49 5.452.984c1.2 1.18 2.868 1.912 4.714 1.912s3.514-.732 4.715-1.913c2.012-.494 4.155-.983 5.45-.983c1.456 0 1.839.62-.245 2.543"
-    />
-    <path
-      fill="currentColor"
-      d="M40.258 47.228c-1.396 0-5.807 1.697-8.258 1.697s-6.861-1.697-8.258-1.697c-.616 0-.646.332.34 1.284c3.291 3.186 2.836 7.103 7.918 7.133c5.084-.03 4.627-3.947 7.92-7.133c.984-.953.955-1.284.338-1.284m-8.265 7.449c-1.187-.007-1.977-.254-2.599-.685c.475-.398 1.295-.849 2.605-.849c1.309 0 2.129.449 2.605.848c-.624.432-1.417.679-2.611.686m5.475-4.975c-.88.749-4.042 1.146-5.468 1.146s-4.587-.397-5.468-1.146c-.278-.236-.378-.633-.411-.985l.432.115c1.834.497 3.913 1.062 5.447 1.062c1.533 0 3.613-.564 5.449-1.062c.145-.04.285-.076.43-.115c-.033.353-.133.749-.411.985m-9.771-14.568c0-11.921-10-11.921-10 0c0 3.562 10 3.562 10 0m-8.345.051c0-9.537 8-9.537 8 0c0 2.849-8 2.849-8 0"
-    />
-    <ellipse
-      cx="23.676"
-      cy="33.449"
-      fill="red"
-      rx="2.5"
-      ry="3.386"
-    />
-    <path
-      fill="currentColor"
-      d="M36.301 35.134c0 3.563 10 3.563 10 0c0-11.921-10-11.921-10 0m.347.051c0-9.537 8-9.537 8 0c0 2.849-8 2.849-8 0"
-    />
-    <path
-      fill="red"
-      d="M40.291 30.063c-1.381 0-2.5 1.516-2.5 3.386c0 1.874 1.119 3.39 2.5 3.39s2.5-1.516 2.5-3.39c0-1.87-1.119-3.386-2.5-3.386"
-    />
-  </svg>
-    `;
-  } else if (opponent.dataset.choice === "ai") {
-    playing_svg_container.innerHTML = `
-    <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="94"
-          height="94"
-          viewBox="0 0 24 24"
-        >
-          <path
-            fill="#780000"
-            d="M22 14h-1c0-3.87-3.13-7-7-7h-1V5.73A2 2 0 1 0 10 4c0 .74.4 1.39 1 1.73V7h-1c-3.87 0-7 3.13-7 7H2c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1h1v1a2 2 0 0 0 2 2h14c1.11 0 2-.89 2-2v-1h1c.55 0 1-.45 1-1v-3c0-.55-.45-1-1-1M7.5 18A2.5 2.5 0 0 1 5 15.5c0-.82.4-1.54 1-2l3.83 2.88C9.5 17.32 8.57 18 7.5 18m9 0c-1.07 0-2-.68-2.33-1.62L18 13.5c.6.46 1 1.18 1 2a2.5 2.5 0 0 1-2.5 2.5Z"
-          />
-        </svg>
-    `;
+  // This function is responsible for drawing the player's move on the game board
+  function drawOnBoard(player, i, j) {
+    let img;
+    let imageWidth;
+    let imageHeight;
+    let x_value;
+    let y_value;
+    if (player === "X") {
+      img = xImage;
+      // Align the image in the center of each space
+      imageWidth = xImage.width;
+      imageHeight = xImage.height;
+      x_value = j * SPACE_SIZE + (SPACE_SIZE - imageWidth) / 2;
+      y_value = i * SPACE_SIZE + (SPACE_SIZE - imageHeight) / 2;
+    } else {
+      img = oImage;
+      // Align the image in the center of each space
+      imageWidth = oImage.width;
+      imageHeight = oImage.height;
+      x_value = j * SPACE_SIZE + (SPACE_SIZE - imageWidth) / 2;
+      y_value = i * SPACE_SIZE + (SPACE_SIZE - imageHeight) / 2;
+    }
+
+    ctx.drawImage(img, x_value, y_value, imageWidth, imageHeight);
   }
 }
-
-function clearPlayersArray(player, opponent) {
-  let player_index_counter = player.length;
-  let opponent_index_counter = opponent.length;
-
-  if (player_index_counter > 0) {
-    player.splice(0, player_index_counter);
+// This function checks if the game board is fully filled with moves and returns true if it is.
+function isTie(gameData) {
+  let isBoardFill = true;
+  for (let i = 0; i < gameData.length; i++) {
+    isBoardFill = gameData[i] && isBoardFill;
   }
-
-  if (opponent_index_counter > 0) {
-    opponent.splice(0, opponent_index_counter);
+  if (isBoardFill) {
+    return true;
   }
+  return false;
 }
 
-human_choice_box.addEventListener("click", function () {
-  play_container.classList.remove("hidden");
-  board.classList.remove("hidden");
-  playing_svg_container.classList.remove("hidden");
-  main_start_page.classList.add("hidden");
-  renderSvg(human_choice_box);
-  playHumanVsHuman(cells);
-});
+// GET EMPTY SPACES
+function getEmptySpaces(gameData) {
+  let EMPTY = [];
 
-function clearGameBoard() {
-  board.innerHTML = `
-        <div class="cell" id="0" data-cell data-clicked="false"></div>
-        <div class="cell" id="1" data-cell data-clicked="false"></div>
-        <div class="cell" id="2" data-cell data-clicked="false"></div>
-        <div class="cell" id="3" data-cell data-clicked="false"></div>
-        <div class="cell" id="4" data-cell data-clicked="false"></div>
-        <div class="cell" id="5" data-cell data-clicked="false"></div>
-        <div class="cell" id="6" data-cell data-clicked="false"></div>
-        <div class="cell" id="7" data-cell data-clicked="false"></div>
-        <div class="cell" id="8" data-cell data-clicked="false"></div>`;
+  for (let id = 0; id < gameData.length; id++) {
+    if (!gameData[id]) EMPTY.push(id);
+  }
+
+  return EMPTY;
 }
