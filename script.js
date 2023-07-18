@@ -201,6 +201,8 @@ function init(player, OPPONENT) {
     const result_box = document.querySelector(".play-again-container");
     result_box.classList.remove("hidden");
     const result_txt = document.querySelector(".result-txt");
+    const board_html = document.querySelector(".board");
+    board_html.classList.add("hidden");
 
     if (player === "Tie") {
       result_txt.textContent = "NO WINNER...BORING..";
