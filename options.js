@@ -5,6 +5,7 @@ const play_container = document.querySelector(".play-container");
 const svg_container = document.querySelector(".current-svg-container");
 const h1_text = document.querySelector(".welcome-h1");
 const heading_paragraph_box = document.querySelector(".heading-paragraph-box");
+const board_html = document.querySelector(".board");
 
 const player = new Object();
 let OPPONENT;
@@ -28,6 +29,7 @@ computer.addEventListener("click", function () {
   player_p.style.textAlign = "center";
   start_container.classList.add("hidden");
   play_container.classList.remove("hidden");
+  board_html.classList.remove("hidden");
 
   heading_paragraph_strong.textContent = "Good Luck Human..Ha..Ha..HAA";
   h1_text.textContent = "Human VS Ai".toLocaleUpperCase();
@@ -56,6 +58,7 @@ friend.addEventListener("click", function () {
 
   start_container.classList.add("hidden");
   play_container.classList.remove("hidden");
+  board_html.classList.remove("hidden");
   h1_text.textContent = "Human VS Human".toLocaleUpperCase();
   heading_paragraph_box.innerHTML = ` 
   <span class="heading-paragraph-txt">
