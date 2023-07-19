@@ -58,6 +58,17 @@ strong {
   animation: type 2.5s linear 0s infinite alternate;
 }
 
+.heading-paragraph-txt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.strong {
+  place-content: center;
+}
+
 @keyframes type {
   0% {
     filter: blur(10px);
@@ -477,16 +488,6 @@ canvas {
     width: 170px;
   }
 
-  .heading-paragraph-txt {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .strong {
-    place-content: center;
-  }
   strong {
     font-size: 20px;
     padding: 5px;
